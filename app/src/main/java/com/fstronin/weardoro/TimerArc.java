@@ -6,16 +6,14 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
-import java.util.Timer;
 
 public class TimerArc extends View
 {
-    protected Paint paint;
-    protected RectF oval;
-    protected float sweepAngle = 0;
+    private Paint paint;
+    private RectF oval;
+    private float sweepAngle = 0;
 
     public TimerArc(Context context, AttributeSet attrs)
     {
@@ -53,10 +51,9 @@ public class TimerArc extends View
         canvas.drawArc(oval, -90, sweepAngle, false, paint);
     }
 
-    public TimerArc setSweepAngle(float value)
+    public void setSweepAngle(float value)
     {
         sweepAngle = value;
         invalidate();
-        return this;
     }
 }

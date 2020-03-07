@@ -77,9 +77,14 @@ public abstract class CustomCountDownTimer {
 
     private static final int MSG = 1;
 
-    public Handler getHandler()
+    Handler getHandler()
     {
         return mHandler;
+    }
+
+    void addToStopTimeInFuture(long value)
+    {
+        mStopTimeInFuture += value;
     }
 
     // handles counting down

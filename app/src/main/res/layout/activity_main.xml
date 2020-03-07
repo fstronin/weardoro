@@ -23,26 +23,28 @@
         tools:ignore="MissingPrefix">
 
         <TextView
-            android:id="@+id/text"
+            android:id="@+id/text_view_top"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/hello_world" />
+            android:layout_gravity="center_horizontal|top"
+            android:text="@string/text_greetings"
+            android:gravity="center"/>
 
         <Button
-            android:id="@+id/startBtn"
+            android:id="@+id/actionBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Start"
+            android:text="START"
             android:layout_gravity="center_horizontal|center_vertical"/>
 
-        <Button
-            android:id="@+id/stopBtn"
+        <TextView
+            android:id="@+id/text_view_bottom"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Stop"
-            android:layout_gravity="center_horizontal|bottom"/>
-
-
+            android:layout_gravity="center_horizontal|bottom"
+            android:gravity="center"
+            android:textAllCaps="true"
+            android:visibility="invisible" />
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

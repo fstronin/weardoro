@@ -1,5 +1,7 @@
 package com.fstronin.weardoro.service.timer;
 
+import android.os.SystemClock;
+
 import com.fstronin.weardoro.logging.LoggerInterface;
 
 public abstract class PausableCountDownTimer extends CustomCountDownTimer {
@@ -7,6 +9,7 @@ public abstract class PausableCountDownTimer extends CustomCountDownTimer {
     private final int MSG = 1;
     private LoggerInterface mLogger;
     private boolean mPaused = false;
+    private long mPausedTime;
 
     /**
      * @param millisInFuture    The number of millis in the future from the call
@@ -32,6 +35,7 @@ public abstract class PausableCountDownTimer extends CustomCountDownTimer {
             return;
         }
         mPaused = true;
+        mPausedTime = SystemClock.elapsedRealtime();
         getHandler().removeMessages(MSG);
     }
 
@@ -42,6 +46,8 @@ public abstract class PausableCountDownTimer extends CustomCountDownTimer {
             return;
         }
         mPaused = false;
+        long diff = SystemClock.elapsedRealtime() - mPausedTime;
+        addToStopTimeInFuture(diff);
         getHandler().sendMessage(getHandler().obtainMessage(MSG));
     }
 }
