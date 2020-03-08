@@ -177,15 +177,6 @@ public class TimerService extends Service {
         startForeground(mForegroundId, getForegroundNotification(mNotificationChannel));
     }
 
-    @Override
-    public void onDestroy()
-    {
-        SharedPreferences.Editor editor = getSharedPreferences(getString(R.string.preference_file_key), MODE_PRIVATE).edit();
-        editor.putInt("timerState", TimerState.IDLE.ordinal());
-        editor.apply();
-        super.onDestroy();
-    }
-
     protected void onTimerStopRequested()
     {
         assert mLogger != null;
