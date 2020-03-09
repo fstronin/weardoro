@@ -1,24 +1,25 @@
 package com.fstronin.weardoro.container;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-
-import androidx.core.app.NotificationManagerCompat;
+import android.content.SharedPreferences;
 
 import com.fstronin.weardoro.R;
+import com.fstronin.weardoro.interval.Interval;
 import com.fstronin.weardoro.logging.Logger;
 import com.fstronin.weardoro.logging.LoggerInterface;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 
 public class Base implements IContainer
 {
-    private Map<Context, NotificationManagerCompat> mNotificationManagers = new HashMap<>();
+    private NotificationManager mNotificationManager;
     private NotificationChannel mNotificationChannel;
     private LoggerInterface mLogger;
     private long mMillisFocusInterval;
@@ -27,14 +28,17 @@ public class Base implements IContainer
     private int mLongRestIntervalPosition;
     private int mServiceForegroundId;
     private SimpleDateFormat mTimerClockFormat;
+    private AlarmManager mAlarmManager;
+    private Gson mGson;
+    private SharedPreferences mSharedPreferences;
 
     @Override
-    public NotificationManagerCompat getNotificationManager(Context ctx)
+    public NotificationManager getNotificationManager(Context ctx)
     {
-        if (!mNotificationManagers.containsKey(ctx)) {
-            mNotificationManagers.put(ctx, NotificationManagerCompat.from(ctx));
+        if (null == mNotificationManager) {
+            mNotificationManager = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         }
-        return mNotificationManagers.get(ctx);
+        return mNotificationManager;
     }
 
     @Override
@@ -114,7 +118,7 @@ public class Base implements IContainer
         return mServiceForegroundId;
     }
 
-    private Locale getLocale()
+    public Locale getLocale()
     {
         return Locale.US;
     }
@@ -125,6 +129,39 @@ public class Base implements IContainer
         if (null == mTimerClockFormat) {
             mTimerClockFormat = new SimpleDateFormat(ctx.getString(R.string.format_timer_clock), getLocale());
         }
-        return mTimerClockFormat;
+        return (DateFormat) mTimerClockFormat.clone();
+    }
+
+    @Override
+    public AlarmManager getAlarmManager(Context ctx)
+    {
+        if (null == mAlarmManager) {
+            mAlarmManager = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
+        }
+        return mAlarmManager;
+    }
+
+    @Override
+    public int getAlarmType()
+    {
+        return AlarmManager.RTC_WAKEUP;
+    }
+
+    @Override
+    public Gson getGson()
+    {
+        if (null == mGson)
+        {
+            mGson = new Gson();
+        }
+        return mGson;
+    }
+
+    public SharedPreferences getSharedPreferences(Context ctx)
+    {
+        if (null == mSharedPreferences) {
+            mSharedPreferences = ctx.getSharedPreferences("com.fstronin.weardoro.preferences", Context.MODE_PRIVATE);
+        }
+        return mSharedPreferences;
     }
 }

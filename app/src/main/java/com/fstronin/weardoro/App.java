@@ -1,15 +1,18 @@
 package com.fstronin.weardoro;
 
+import android.app.AlarmManager;
 import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
-
-import androidx.core.app.NotificationManagerCompat;
+import android.content.SharedPreferences;
 
 import com.fstronin.weardoro.container.Base;
 import com.fstronin.weardoro.container.IContainer;
 import com.fstronin.weardoro.logging.LoggerInterface;
+import com.google.gson.Gson;
 
 import java.text.DateFormat;
+import java.util.Locale;
 
 public class App
 {
@@ -20,7 +23,7 @@ public class App
         mContainer = container;
     }
 
-    public static NotificationManagerCompat getNotificationManager(Context ctx)
+    public static NotificationManager getNotificationManager(Context ctx)
     {
         return mContainer.getNotificationManager(ctx);
     }
@@ -68,5 +71,30 @@ public class App
     public static DateFormat getTimerClockFormat(Context ctx)
     {
         return mContainer.getTimerClockFormat(ctx);
+    }
+
+    public static AlarmManager getAlarmManager(Context ctx)
+    {
+        return mContainer.getAlarmManager(ctx);
+    }
+
+    public static int getAlarmType()
+    {
+        return mContainer.getAlarmType();
+    }
+
+    public static Locale getLocale()
+    {
+        return mContainer.getLocale();
+    }
+
+    public static Gson getGson()
+    {
+        return mContainer.getGson();
+    }
+
+    public static SharedPreferences getSharedPreferences(Context ctx)
+    {
+        return mContainer.getSharedPreferences(ctx);
     }
 }

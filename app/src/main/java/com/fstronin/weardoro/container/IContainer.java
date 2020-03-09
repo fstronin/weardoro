@@ -1,17 +1,21 @@
 package com.fstronin.weardoro.container;
 
-import android.app.NotificationChannel;
-import android.content.Context;
+import java.text.DateFormat;
+import java.util.Locale;
 
-import androidx.core.app.NotificationManagerCompat;
+
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.fstronin.weardoro.logging.LoggerInterface;
-
-import java.text.DateFormat;
+import com.google.gson.Gson;
 
 public interface IContainer
 {
-    NotificationManagerCompat getNotificationManager(Context ctx);
+    NotificationManager getNotificationManager(Context ctx);
     NotificationChannel getNotificationChannel(Context ctx);
     LoggerInterface getLogger();
     long getMillisFocusInterval(Context ctx);
@@ -21,4 +25,9 @@ public interface IContainer
     long getMillisCountDownInterval(Context ctx);
     int getServiceForegroundId(Context ctx);
     DateFormat getTimerClockFormat(Context ctx);
+    AlarmManager getAlarmManager(Context ctx);
+    int getAlarmType();
+    Locale getLocale();
+    Gson getGson();
+    SharedPreferences getSharedPreferences(Context ctx);
 }
