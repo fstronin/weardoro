@@ -4,19 +4,26 @@ import android.content.Context;
 
 import com.fstronin.weardoro.App;
 
-public class Interval implements IInterval
+abstract public class Interval implements IInterval
 {
-    private State mState;
+    private State mState = State.IDLE;
     private long mDuration;
     private long mStartedAt;
     private long mPausedAt;
     private AlarmPendingIntentBuilder mAlarmPendingIntentBuilder;
+    private int mFocusIntervalsBeenInChain;
 
     public Interval(long duration, AlarmPendingIntentBuilder alarmPendingIntentBuilder)
     {
-        mState = State.IDLE;
         mDuration = duration;
         mAlarmPendingIntentBuilder = alarmPendingIntentBuilder;
+    }
+
+    protected Interval(long duration, AlarmPendingIntentBuilder alarmPendingIntentBuilder, int focusIntervalsBeenInChain)
+    {
+        mDuration = duration;
+        mAlarmPendingIntentBuilder = alarmPendingIntentBuilder;
+        mFocusIntervalsBeenInChain = focusIntervalsBeenInChain;
     }
 
     public State getState()
@@ -50,7 +57,7 @@ public class Interval implements IInterval
                 .setExactAndAllowWhileIdle(
                         App.getAlarmType(),
                         getAlarmTimeInMillis(System.currentTimeMillis()),
-                        mAlarmPendingIntentBuilder.build(ctx)
+                        mAlarmPendingIntentBuilder.build(ctx, this)
                 );
         mState = State.RUNNING;
     }
@@ -63,7 +70,7 @@ public class Interval implements IInterval
         mPausedAt = System.currentTimeMillis();
         App
                 .getAlarmManager(ctx)
-                .cancel(mAlarmPendingIntentBuilder.build(ctx));
+                .cancel(mAlarmPendingIntentBuilder.build(ctx, this));
         mState = State.PAUSED;
     }
 
@@ -80,4 +87,16 @@ public class Interval implements IInterval
     {
         return currentTime + getDuration() - getPausedAt();
     }
+
+    public AlarmPendingIntentBuilder getAlarmPendingIntentBuilder()
+    {
+        return new AlarmPendingIntentBuilder(mAlarmPendingIntentBuilder);
+    }
+
+    protected int getFocusIntervalsBeenInChain()
+    {
+        return mFocusIntervalsBeenInChain;
+    }
+
+    abstract public IInterval getNext();
 }

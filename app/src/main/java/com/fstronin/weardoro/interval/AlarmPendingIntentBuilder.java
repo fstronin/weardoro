@@ -4,32 +4,60 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 
-public class AlarmPendingIntentBuilder
+import com.fstronin.weardoro.AlarmReceiver;
+import com.fstronin.weardoro.App;
+
+public class AlarmPendingIntentBuilder implements Cloneable
 {
     private int mRequestCode;
-    private Intent mIntent;
     private int mFlags;
 
-    public AlarmPendingIntentBuilder setRequestCode(int requestCode)
+    public AlarmPendingIntentBuilder(int flags)
+    {
+        init(0, flags);
+    }
+
+    public AlarmPendingIntentBuilder()
+    {
+        init(0, 0);
+    }
+
+    public AlarmPendingIntentBuilder(AlarmPendingIntentBuilder source)
+    {
+        init(source.getRequestCode(), source.getFlags());
+    }
+
+    private void init(int requestCode, int flags)
     {
         mRequestCode = requestCode;
-        return this;
-    }
-
-    public AlarmPendingIntentBuilder setIntent(Intent intent)
-    {
-        mIntent = intent;
-        return this;
-    }
-
-    public AlarmPendingIntentBuilder setFlags(int flags)
-    {
         mFlags = flags;
-        return this;
     }
 
-    public PendingIntent build(Context ctx)
+    public int getRequestCode()
     {
-        return PendingIntent.getBroadcast(ctx, mRequestCode, mIntent, mFlags);
+        return mRequestCode;
+    }
+
+    public int getFlags()
+    {
+        return mFlags;
+    }
+
+    private Intent buildAlarmIntent(Context ctx, IInterval interval)
+    {
+        String className = interval.getClass().getName();
+        return  (new Intent(ctx, AlarmReceiver.class))
+                .setAction(IInterval.ALARM_INTENT_ACTION_INTERVAL_FINISHED)
+                .putExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY, App.getGson().toJson(interval))
+                .putExtra(IInterval.ALARM_INTENT_INTERVAL_CLASS_KEY, className);
+    }
+
+    public PendingIntent build(Context ctx, IInterval interval)
+    {
+        mRequestCode ++;
+        if (mRequestCode == Integer.MAX_VALUE) {
+            mRequestCode = 1;
+        }
+        return PendingIntent.getBroadcast(ctx, mRequestCode, buildAlarmIntent(ctx, interval), mFlags);
     }
 }

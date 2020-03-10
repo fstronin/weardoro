@@ -46,10 +46,7 @@ public class MainActivity extends WearableActivity
 
         mIntervalBuilder = new IntervalBuilder();
 
-        mAlarmIntentBuilder = (new AlarmPendingIntentBuilder())
-                .setRequestCode(ALARM_REQUEST_CODE)
-                .setFlags(0)
-                .setIntent((new Intent(this, AlarmReceiver.class)).setAction("com.fstronin.weardoro.INTERVAL_FINISHED"));
+        mAlarmIntentBuilder = (new AlarmPendingIntentBuilder());
     }
 
     @Override
@@ -63,8 +60,7 @@ public class MainActivity extends WearableActivity
                 PREF_KEY_INTERVAL_CLASS,
                 PREF_KEY_INTERVAL_DATA,
                 mAlarmIntentBuilder
-        );
-        */
+        );*/
     }
 
     @Override
