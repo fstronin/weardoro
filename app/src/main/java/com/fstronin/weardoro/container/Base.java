@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 
 import com.fstronin.weardoro.R;
 import com.fstronin.weardoro.interval.Interval;
+import com.fstronin.weardoro.interval.IntervalBuilder;
 import com.fstronin.weardoro.logging.Logger;
 import com.fstronin.weardoro.logging.LoggerInterface;
 import com.google.gson.Gson;
@@ -163,5 +164,10 @@ public class Base implements IContainer
             mSharedPreferences = ctx.getSharedPreferences("com.fstronin.weardoro.preferences", Context.MODE_PRIVATE);
         }
         return mSharedPreferences;
+    }
+
+    public IntervalBuilder getIntervalBuilder()
+    {
+        return new IntervalBuilder();
     }
 }

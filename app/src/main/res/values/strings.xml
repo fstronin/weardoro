@@ -9,6 +9,7 @@
     <string name="text_greetings">Tap the button to start\n&#x1F345;</string>
     <string name="text_timer_mode_focus">Focus</string>
     <string name="text_timer_mode_rest">Rest</string>
+    <string name="text_timer_mode_long_rest">Long Rest</string>
     <string name="text_timer_service_notification_title">Service is active</string>
     <string name="text_timer_service_notification_content">Tap me to open Weardoro</string>
     <string name="text_start">Start</string>

@@ -3,61 +3,52 @@ package com.fstronin.weardoro.interval;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.fstronin.weardoro.AlarmReceiver;
-import com.fstronin.weardoro.App;
 
-public class AlarmPendingIntentBuilder implements Cloneable
+public class AlarmPendingIntentBuilder implements Parcelable
 {
-    private int mRequestCode;
-    private int mFlags;
+    private final int REQUEST_CODE = 1;
+    private final int FLAGS = PendingIntent.FLAG_UPDATE_CURRENT;
 
-    public AlarmPendingIntentBuilder(int flags)
-    {
-        init(0, flags);
-    }
+    public AlarmPendingIntentBuilder()  {}
+    public AlarmPendingIntentBuilder(Parcel in)  {}
 
-    public AlarmPendingIntentBuilder()
-    {
-        init(0, 0);
-    }
+    public static final Creator<AlarmPendingIntentBuilder> CREATOR = new Creator<AlarmPendingIntentBuilder>() {
+        @Override
+        public AlarmPendingIntentBuilder createFromParcel(Parcel in) {
+            return new AlarmPendingIntentBuilder(in);
+        }
 
-    public AlarmPendingIntentBuilder(AlarmPendingIntentBuilder source)
-    {
-        init(source.getRequestCode(), source.getFlags());
-    }
-
-    private void init(int requestCode, int flags)
-    {
-        mRequestCode = requestCode;
-        mFlags = flags;
-    }
-
-    public int getRequestCode()
-    {
-        return mRequestCode;
-    }
-
-    public int getFlags()
-    {
-        return mFlags;
-    }
+        @Override
+        public AlarmPendingIntentBuilder[] newArray(int size) {
+            return new AlarmPendingIntentBuilder[size];
+        }
+    };
 
     private Intent buildAlarmIntent(Context ctx, IInterval interval)
     {
-        String className = interval.getClass().getName();
-        return  (new Intent(ctx, AlarmReceiver.class))
+        Bundle intervalContainer = new Bundle();
+        // Alarm Manager intents do not support custom parcelable objects
+        intervalContainer.putParcelable(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY, interval);
+        return (new Intent(ctx, AlarmReceiver.class))
                 .setAction(IInterval.ALARM_INTENT_ACTION_INTERVAL_FINISHED)
-                .putExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY, App.getGson().toJson(interval))
-                .putExtra(IInterval.ALARM_INTENT_INTERVAL_CLASS_KEY, className);
+                .putExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY, intervalContainer);
     }
 
     public PendingIntent build(Context ctx, IInterval interval)
     {
-        mRequestCode ++;
-        if (mRequestCode == Integer.MAX_VALUE) {
-            mRequestCode = 1;
-        }
-        return PendingIntent.getBroadcast(ctx, mRequestCode, buildAlarmIntent(ctx, interval), mFlags);
+        return PendingIntent.getBroadcast(ctx, REQUEST_CODE, buildAlarmIntent(ctx, interval), FLAGS);
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) { }
 }

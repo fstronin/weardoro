@@ -1,6 +1,9 @@
 package com.fstronin.weardoro.interval;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Parcel;
 
 import com.fstronin.weardoro.App;
 
@@ -26,6 +29,15 @@ abstract public class Interval implements IInterval
         mFocusIntervalsBeenInChain = focusIntervalsBeenInChain;
     }
 
+    protected Interval(Parcel in) {
+        mState = State.valueOf(in.readString());
+        mDuration = in.readLong();
+        mStartedAt = in.readLong();
+        mPausedAt = in.readLong();
+        mAlarmPendingIntentBuilder = in.readParcelable(AlarmPendingIntentBuilder.class.getClassLoader());
+        mFocusIntervalsBeenInChain = in.readInt();
+    }
+
     public State getState()
     {
         return mState;
@@ -46,20 +58,53 @@ abstract public class Interval implements IInterval
         return mPausedAt;
     }
 
-    public void start(Context ctx) throws IntervalException
+    private void save(Context ctx)
+    {
+        App.getSharedPreferences(ctx)
+                .edit()
+                .putString(IInterval.PREF_KEY_INTERVAL_CLASS, this.getClass().getName())
+                .putString(IInterval.PREF_KEY_INTERVAL_DATA, App.getGson().toJson(this))
+                .apply();
+    }
+
+    private void notifySubscribers(Context ctx, String action)
+    {
+        ctx.sendBroadcast(
+            (new Intent())
+                    .setAction(action)
+                    .putExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY, this)
+        );
+    }
+
+    private void start(Context ctx, long startedAt) throws IntervalException
     {
         if (mState != State.IDLE) {
             throw new IntervalException("Can not start from state \"%s\"", mState.name());
         }
-        mStartedAt = System.currentTimeMillis();
+        mStartedAt = startedAt;
         App
                 .getAlarmManager(ctx)
                 .setExactAndAllowWhileIdle(
                         App.getAlarmType(),
-                        getAlarmTimeInMillis(System.currentTimeMillis()),
+                        getAlarmTimeInMillis(),
                         mAlarmPendingIntentBuilder.build(ctx, this)
                 );
         mState = State.RUNNING;
+        save(ctx);
+        notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_STARTED);
+    }
+
+    public void start(Context ctx) throws IntervalException
+    {
+        start(ctx, System.currentTimeMillis());
+        mPausedAt = 0;
+    }
+
+    private void cancelAlarm(Context ctx)
+    {
+        App
+                .getAlarmManager(ctx)
+                .cancel(mAlarmPendingIntentBuilder.build(ctx, this));
     }
 
     public void pause(Context ctx) throws IntervalException
@@ -68,10 +113,10 @@ abstract public class Interval implements IInterval
             throw new IntervalException("Can not pause from state \"%s\"", mState.name());
         }
         mPausedAt = System.currentTimeMillis();
-        App
-                .getAlarmManager(ctx)
-                .cancel(mAlarmPendingIntentBuilder.build(ctx, this));
+        cancelAlarm(ctx);
         mState = State.PAUSED;
+        save(ctx);
+        notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_PAUSED);
     }
 
     public void resume(Context ctx) throws IntervalException
@@ -80,17 +125,44 @@ abstract public class Interval implements IInterval
             throw new IntervalException("Can not resume from state \"%s\"", mState.name());
         }
         mState = State.IDLE;
-        start(ctx);
+        start(ctx, mStartedAt);
     }
 
-    private long getAlarmTimeInMillis(long currentTime)
+    public void stop(Context ctx) throws IntervalException
     {
-        return currentTime + getDuration() - getPausedAt();
+        if (mState != State.RUNNING && mState != State.PAUSED) {
+            throw new IntervalException(
+                    "Can stop only from states \"%s\" and \"%s\"",
+                    State.RUNNING.name(),
+                    State.PAUSED.name()
+            );
+        }
+        cancelAlarm(ctx);
+        mState = State.IDLE;
+        mStartedAt = 0;
+        mPausedAt = 0;
+        mFocusIntervalsBeenInChain = 0;
+        save(ctx);
+        notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_STOPPED);
+    }
+
+    public long getMillisInFuture()
+    {
+        return mPausedAt > 0L
+                ? Math.abs(mPausedAt - (mStartedAt + mDuration))
+                : Math.abs(System.currentTimeMillis() - (mStartedAt + mDuration));
+    }
+
+    private long getAlarmTimeInMillis()
+    {
+        return mPausedAt > 0L
+                ? System.currentTimeMillis() + (mDuration - (mPausedAt - mStartedAt))
+                : System.currentTimeMillis() + mDuration;
     }
 
     public AlarmPendingIntentBuilder getAlarmPendingIntentBuilder()
     {
-        return new AlarmPendingIntentBuilder(mAlarmPendingIntentBuilder);
+        return mAlarmPendingIntentBuilder;
     }
 
     protected int getFocusIntervalsBeenInChain()
@@ -99,4 +171,21 @@ abstract public class Interval implements IInterval
     }
 
     abstract public IInterval getNext();
+
+    abstract public String getDisplayName(Context ctx);
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(mState.name());
+        dest.writeLong(mDuration);
+        dest.writeLong(mStartedAt);
+        dest.writeLong(mPausedAt);
+        dest.writeParcelable(mAlarmPendingIntentBuilder, 0);
+        dest.writeInt(mFocusIntervalsBeenInChain);
+    }
 }

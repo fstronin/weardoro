@@ -51,9 +51,18 @@ public class TimerArc extends View
         canvas.drawArc(oval, -90, sweepAngle, false, paint);
     }
 
-    public void setSweepAngle(float value)
+    private void setSweepAngle(float value)
     {
         sweepAngle = value;
         invalidate();
+    }
+
+    public void update(Context ctx, long millisInFuture, long millisUntilFinished)
+    {
+        float clockCirclePercent = millisUntilFinished > App.getMillisCountDownInterval(ctx)
+                ? (float) millisUntilFinished / (float) millisInFuture * 100f
+                : 0;
+        float sweepAngle = 360f * clockCirclePercent / 100f;
+        setSweepAngle(sweepAngle);
     }
 }

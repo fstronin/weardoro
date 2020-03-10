@@ -42,7 +42,6 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".service.timer.TimerService" android:exported="false" />
     </application>
 
 </manifest>

@@ -3,37 +3,28 @@ package com.fstronin.weardoro;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.widget.Toast;
+import android.os.Bundle;
 
 import com.fstronin.weardoro.interval.IInterval;
 import com.fstronin.weardoro.interval.IntervalException;
-
-import java.lang.reflect.Type;
 
 public class AlarmReceiver extends BroadcastReceiver
 {
     @Override
     public void onReceive(Context context, Intent intent) {
-        String intervalClassName = intent.getStringExtra(IInterval.ALARM_INTENT_INTERVAL_CLASS_KEY);
-        if (null == intervalClassName) {
-            App.getLogger().e(this.getClass().getName(), "Interval class name is empty");
+        String action = intent.getAction();
+        if (null == action) {
+            App.getLogger().e(this.getClass().getName(), "Empty action");
             return;
         }
-        Class intervalClass = null;
-        try {
-            intervalClass = Class.forName(intervalClassName);
-        } catch (ClassNotFoundException e) {
-            App.getLogger().d(this.getClass().getName(), e.getMessage(), e);
-        }
-        if (null == intervalClass) {
+        Bundle intervalContainer = intent.getBundleExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY);
+        if (null == intervalContainer) {
+            App.getLogger().e(this.getClass().getName(), "Unable to obtain an interval container from an intent");
             return;
         }
-        String intervalData = intent.getStringExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY);
-        IInterval interval = App
-                .getGson()
-                .fromJson(intervalData, (Type) intervalClass);
+        IInterval interval = intervalContainer.getParcelable(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY);
         if (null == interval) {
-            App.getLogger().d(this.getClass().getName(), "Unable to create an IInterval from JSON, empty result");
+            App.getLogger().e(this.getClass().getName(), "Unable to obtain interval instance from an intent");
             return;
         }
         IInterval nextInterval = interval.getNext();

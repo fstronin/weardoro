@@ -44,7 +44,7 @@
             android:layout_gravity="center_horizontal|bottom"
             android:gravity="center"
             android:textAllCaps="true"
-            android:visibility="invisible" />
+            android:visibility="visible" />
 
     </FrameLayout>
 </androidx.wear.widget.BoxInsetLayout>

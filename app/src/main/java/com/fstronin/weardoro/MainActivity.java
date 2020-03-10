@@ -1,8 +1,11 @@
 package com.fstronin.weardoro;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
 import android.widget.TextView;
@@ -11,24 +14,20 @@ import android.widget.Button;
 import com.fstronin.weardoro.interval.AlarmPendingIntentBuilder;
 import com.fstronin.weardoro.interval.FocusInterval;
 import com.fstronin.weardoro.interval.IInterval;
-import com.fstronin.weardoro.interval.IntervalBuilder;
 import com.fstronin.weardoro.interval.IntervalException;
+
+import java.util.Date;
 
 public class MainActivity extends WearableActivity
 {
-
-    private final String PREF_KEY_INTERVAL_CLASS = "INTERVAL_CLASS";
-    private final String PREF_KEY_INTERVAL_DATA = "INTERVAL_DATA";
-    private final int ALARM_REQUEST_CODE = 1;
-
-    private IntervalBuilder mIntervalBuilder;
-    private AlarmPendingIntentBuilder mAlarmIntentBuilder;
-
     private TextView mTopTextView;
     private TextView mBottomTextView;
     private Button mActionBtn;
     private TimerArc mTimerArc;
     private IInterval mInterval;
+
+    private BroadcastReceiver mBroadcastReceiver;
+    private CountDownTimer mCountDownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,39 +43,41 @@ public class MainActivity extends WearableActivity
 
         mTimerArc = findViewById((R.id.timerArc));
 
-        mIntervalBuilder = new IntervalBuilder();
-
-        mAlarmIntentBuilder = (new AlarmPendingIntentBuilder());
+        mBroadcastReceiver = buildBroadcastReceiver();
     }
 
     @Override
-    public void onStart()
+    public void onPause()
     {
-        super.onStart();
-        mInterval = new FocusInterval(mAlarmIntentBuilder);
-        /*
-        mInterval = mIntervalBuilder.fromSharedPreferences(
+        super.onPause();
+        // If user paused the activity then it doesn't need to handle any updates from AlarmReceiver
+        unregisterReceiver(mBroadcastReceiver);
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+
+        // Try to read latest started interval
+        mInterval = App.getIntervalBuilder().fromSharedPreferences(
                 App.getSharedPreferences(this),
-                PREF_KEY_INTERVAL_CLASS,
-                PREF_KEY_INTERVAL_DATA,
-                mAlarmIntentBuilder
-        );*/
-    }
-
-    @Override
-    public void onStop()
-    {
-        String intervalData = App.getGson().toJson(mInterval);
-        App.getLogger().d(
-                this.getLocalClassName(),
-                "Going to save interval instance into shared preferences, class = "
-                + mInterval.getClass().getName() + ", data = " + intervalData
+                IInterval.PREF_KEY_INTERVAL_CLASS,
+                IInterval.PREF_KEY_INTERVAL_DATA
         );
-        SharedPreferences.Editor spEditor = App.getSharedPreferences(this).edit();
-        spEditor.putString(PREF_KEY_INTERVAL_CLASS, mInterval.getClass().getName());
-        spEditor.putString(PREF_KEY_INTERVAL_DATA, intervalData);
-        spEditor.apply();
-        super.onStop();
+        // If nothing found then just create a default one
+        if (null == mInterval) {
+            mInterval = new FocusInterval(new AlarmPendingIntentBuilder());
+        }
+
+        onIntervalLoad(mInterval);
+
+        // Register a receiver to be able to receive messages from an AlarmReceiver
+        IntentFilter filter = new IntentFilter();
+        filter.addAction(IInterval.ALARM_INTENT_ACTION_INTERVAL_STARTED);
+        filter.addAction(IInterval.ALARM_INTENT_ACTION_INTERVAL_PAUSED);
+        filter.addAction(IInterval.ALARM_INTENT_ACTION_INTERVAL_STOPPED);
+        registerReceiver(mBroadcastReceiver, filter);
     }
 
     private void onActionBtnClick(View v)
@@ -100,21 +101,98 @@ public class MainActivity extends WearableActivity
         }
     }
 
-
     private boolean onActionBtnLongClick(View v)
     {
-        // onIntervalStopRequested(mInterval);
+        try {
+            if (null != mCountDownTimer) {
+                mCountDownTimer.cancel();
+            }
+            mInterval.stop(this);
+        } catch (IntervalException e) {
+            App.getLogger().e(this.getClass().getName(), e.getMessage(), e);
+        }
         return true;
     }
 
-    protected void updateTimerArc(long millisUntilFinished)
+    private void onIntervalLoad(IInterval interval)
     {
-        long mMillisInFuture =0;
-        float clockCirclePercent = millisUntilFinished > App.getMillisCountDownInterval(this)
-                ? (float)millisUntilFinished / (float)mMillisInFuture * 100f
-                : 0;
-        float sweepAngle = 360f * clockCirclePercent / 100f;
-        mTimerArc.setSweepAngle(sweepAngle);
+        mTopTextView.setText(App.getTimerClockFormat(this).format(new Date(interval.getMillisInFuture())));
+        mBottomTextView.setText(interval.getDisplayName(this));
+        switch (interval.getState()) {
+            case PAUSED:
+                mActionBtn.setText(R.string.text_resume);
+                break;
+            case RUNNING:
+                onIntervalStarted(interval);
+        }
     }
 
+    private void onIntervalStarted(IInterval interval)
+    {
+        if (null != mCountDownTimer) {
+            mCountDownTimer.cancel();
+        }
+        long timerMillisInFuture = interval.getMillisInFuture();
+        if (timerMillisInFuture > 0) {
+            mCountDownTimer = new CountDownTimer(timerMillisInFuture, App.getMillisCountDownInterval(this)) {
+                @Override
+                public void onTick(long millisUntilFinished) {
+                   //  App.getLogger().d(this.getClass().getName(), "Timer tick, millisUntilFinished=" + millisUntilFinished);
+                   // mTimerArc.update(MainActivity.this, timerMillisInFuture, millisUntilFinished);
+                    mTopTextView.setText(App.getTimerClockFormat(MainActivity.this).format(new Date(millisUntilFinished)));
+                }
+
+                @Override
+                public void onFinish() {
+                    App.getLogger().d(this.getClass().getName(), "Timer finished");
+                }
+            }.start();
+        }
+        mActionBtn.setText(R.string.text_pause);
+        mBottomTextView.setText(interval.getDisplayName(this));
+    }
+
+    private void onIntervalPaused(IInterval interval)
+    {
+        if (null != mCountDownTimer) {
+            mCountDownTimer.cancel();
+        }
+        mActionBtn.setText(R.string.text_resume);
+    }
+
+    private void onIntervalStopped(IInterval interval)
+    {
+        if (null != mCountDownTimer) {
+            mCountDownTimer.cancel();
+        }
+        mActionBtn.setText(R.string.text_stop);
+        mTopTextView.setText(R.string.text_greetings);
+        mBottomTextView.setText("");
+        mTimerArc.update(this, 0, 0);
+    }
+
+    private BroadcastReceiver buildBroadcastReceiver()
+    {
+        return new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                IInterval interval = intent.getParcelableExtra(IInterval.ALARM_INTENT_INTERVAL_INSTANCE_KEY);
+                if (null == interval) {
+                    App.getLogger().e(this.getClass().getName(), "Unable to obtain interval instance from an intent");
+                    return;
+                }
+                switch (intent.getAction()) {
+                    case IInterval.ALARM_INTENT_ACTION_INTERVAL_STARTED:
+                        MainActivity.this.onIntervalStarted(interval);
+                        break;
+                    case IInterval.ALARM_INTENT_ACTION_INTERVAL_PAUSED:
+                        MainActivity.this.onIntervalPaused(interval);
+                        break;
+                    case IInterval.ALARM_INTENT_ACTION_INTERVAL_STOPPED:
+                        MainActivity.this.onIntervalStopped(interval);
+                        break;
+                }
+            }
+        };
+    }
 }
