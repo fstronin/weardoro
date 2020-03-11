@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="RedTimerArc">
+        <item name="arcColor">#A62C23</item>
+    </style>
+    <style name="RedBackground">
+        <item name="android:background">#000000</item>
+    </style>
+    <style name="RedButton">
+        <item name="android:background">#F44336</item>
+    </style>
+</resources>

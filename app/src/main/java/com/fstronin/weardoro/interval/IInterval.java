@@ -6,12 +6,12 @@ import android.os.Parcelable;
 public interface IInterval extends Parcelable
 {
     long DEFAULT_DURATION_FOCUS_INTERVAL = 1000L * 60L * 25L;
-    // long DEFAULT_DURATION_FOCUS_INTERVAL = 1000L * 25L;
+    // final long DEFAULT_DURATION_FOCUS_INTERVAL = 1000L * 25L;
     long DEFAULT_DURATION_REST_INTERVAL = 1000L * 60L * 5L;
-    // long DEFAULT_DURATION_REST_INTERVAL = 1000L * 5L;
+    // final long DEFAULT_DURATION_REST_INTERVAL = 1000L * 5L;
     long DEFAULT_DURATION_LONG_REST_INTERVAL = 1000L * 60L * 15L;
-    // long DEFAULT_DURATION_LONG_REST_INTERVAL = 1000L * 15L;
-    int DEFAULT_LONG_REST_INTERVAL_POSITION = 4;
+    // final long DEFAULT_DURATION_LONG_REST_INTERVAL = 1000L * 15L;
+    final int DEFAULT_LONG_REST_INTERVAL_POSITION = 4;
 
     final String ALARM_INTENT_ACTION_INTERVAL_FINISHED = "com.fstronin.weardoro.INTERVAL_FINISHED";
     final String ALARM_INTENT_ACTION_INTERVAL_STARTED = "com.fstronin.weardoro.INTERVAL_STARTED";
@@ -35,4 +35,5 @@ public interface IInterval extends Parcelable
     long getElapsed();
     boolean isFinished();
     void save(Context ctx);
+    Type getType();
 }

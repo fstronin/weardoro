@@ -15,6 +15,7 @@ import com.fstronin.weardoro.interval.AlarmPendingIntentBuilder;
 import com.fstronin.weardoro.interval.FocusInterval;
 import com.fstronin.weardoro.interval.IInterval;
 import com.fstronin.weardoro.interval.IntervalException;
+import com.fstronin.weardoro.interval.Type;
 
 import java.util.Date;
 
@@ -61,11 +62,12 @@ public class MainActivity extends WearableActivity
         super.onResume();
 
         // Try to read latest started interval
+        /*
         mInterval = App.getIntervalBuilder().fromSharedPreferences(
                 App.getSharedPreferences(this),
                 IInterval.PREF_KEY_INTERVAL_CLASS,
                 IInterval.PREF_KEY_INTERVAL_DATA
-        );
+        );*/
         // If nothing found then just create a default one
         if (null == mInterval) {
             mInterval = new FocusInterval(new AlarmPendingIntentBuilder());
@@ -156,7 +158,18 @@ public class MainActivity extends WearableActivity
                 }
             }.start();
         }
-        mActionBtn.setText(R.string.text_pause);
+        int actionBtnTextId;
+        switch (interval.getType()) {
+            default:
+            case FOCUS:
+                actionBtnTextId = R.string.text_pause;
+                break;
+            case REST:
+            case LONG_REST:
+                actionBtnTextId = R.string.text_skip;
+                break;
+        }
+        mActionBtn.setText(actionBtnTextId);
         mBottomTextView.setText(interval.getDisplayName(this));
     }
 
@@ -164,6 +177,22 @@ public class MainActivity extends WearableActivity
     {
         if (null != mCountDownTimer) {
             mCountDownTimer.cancel();
+        }
+        switch (interval.getType()) {
+            case REST:
+            case LONG_REST:
+                try {
+                    interval.stop(this);
+                } catch (IntervalException e) {
+                    App.getLogger().e(this.getClass().getName(), e.getMessage(), e);
+                }
+                mInterval = interval.getNext();
+                try {
+                    mInterval.start(this);
+                } catch (IntervalException e) {
+                    App.getLogger().e(this.getClass().getName(), e.getMessage(), e);
+                }
+                break;
         }
         mActionBtn.setText(R.string.text_resume);
     }
@@ -173,9 +202,12 @@ public class MainActivity extends WearableActivity
         if (null != mCountDownTimer) {
             mCountDownTimer.cancel();
         }
+        if (interval.getType() != Type.FOCUS) {
+            return;
+        }
         mActionBtn.setText(R.string.text_start);
         mTopTextView.setText(R.string.text_greetings);
-        mBottomTextView.setText("");
+        mBottomTextView.setText(R.string.text_tomato);
         mTimerArc.update(this, 0, 0);
     }
 

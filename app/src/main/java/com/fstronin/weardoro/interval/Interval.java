@@ -189,6 +189,7 @@ abstract public class Interval implements IInterval
     abstract public IInterval getNext();
 
     abstract public String getDisplayName(Context ctx);
+    abstract public Type getType();
 
     @Override
     public int describeContents() {

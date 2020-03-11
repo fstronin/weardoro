@@ -6,7 +6,8 @@
 
     <string name="service_foreground_id">1</string>
 
-    <string name="text_greetings">Tap the button to start\n&#x1F345;</string>
+    <string name="text_greetings">00:00</string>
+    <string name="text_tomato">&#x1F345;</string>
     <string name="text_timer_mode_focus">Focus</string>
     <string name="text_timer_mode_rest">Rest</string>
     <string name="text_timer_mode_long_rest">Long Rest</string>
@@ -15,6 +16,7 @@
     <string name="text_start">Start</string>
     <string name="text_pause">Pause</string>
     <string name="text_resume">Resume</string>
+    <string name="text_skip">Skip</string>
     <string name="text_stop">Stop</string>
 
     <string name="format_timer_clock">mm:ss</string>

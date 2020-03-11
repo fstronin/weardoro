@@ -107,7 +107,7 @@ public class Base implements IContainer
     @Override
     public long getMillisCountDownInterval(Context ctx)
     {
-        return 200L;
+        return 100L;
     }
 
     @Override

@@ -42,4 +42,9 @@ public class LongRestInterval extends Interval
             return new LongRestInterval[size];
         }
     };
+
+    public Type getType()
+    {
+        return Type.LONG_REST;
+    }
 }

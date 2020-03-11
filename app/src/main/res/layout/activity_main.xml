@@ -3,17 +3,18 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@color/dark_grey"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity"
     tools:deviceIds="wear"
-    android:padding="@dimen/box_inset_layout_padding">
+    android:padding="@dimen/box_inset_layout_padding"
+    style="@style/RedBackground">
 
     <com.fstronin.weardoro.TimerArc
         android:id="@+id/timerArc"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        style="@style/RedTimerArc" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -27,15 +28,16 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal|top"
+            android:textSize="20sp"
             android:text="@string/text_greetings"
-            android:gravity="center"/>
+            android:gravity="center" />
 
         <Button
             android:id="@+id/actionBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="START"
-            android:layout_gravity="center_horizontal|center_vertical"/>
+            android:text="@string/text_start"
+            android:layout_gravity="center_horizontal|center_vertical" />
 
         <TextView
             android:id="@+id/text_view_bottom"
@@ -44,6 +46,8 @@
             android:layout_gravity="center_horizontal|bottom"
             android:gravity="center"
             android:textAllCaps="true"
+            android:textSize="20sp"
+            android:text="@string/text_tomato"
             android:visibility="visible" />
 
     </FrameLayout>

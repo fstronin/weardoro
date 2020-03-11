@@ -1,6 +1,7 @@
 package com.fstronin.weardoro;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -16,11 +17,17 @@ public class TimerArc extends View
     private Paint paint;
     private RectF oval;
     private float sweepAngle = 0;
+    private String mColor;
 
     public TimerArc(Context context, AttributeSet attrs)
     {
         super(context, attrs);
-        paint = buildPaint();
+
+        TypedArray styleableAttrs = context.obtainStyledAttributes(attrs, R.styleable.TimerArc);
+        mColor = styleableAttrs.getString(R.styleable.TimerArc_arcColor);
+        styleableAttrs.recycle();
+
+        paint = buildPaint(context);
         oval = buildOval();
     }
 
@@ -29,10 +36,10 @@ public class TimerArc extends View
         return new RectF();
     }
 
-    protected Paint buildPaint()
+    protected Paint buildPaint(Context context)
     {
         Paint p = new Paint();
-        p.setColor(Color.RED);
+        p.setColor(Color.parseColor(mColor));
         p.setStyle(Paint.Style.STROKE);
         p.setStrokeWidth(25);
         p.setAntiAlias(true);
@@ -76,7 +83,7 @@ public class TimerArc extends View
     public void update(Context ctx, long millisInFuture, long millisUntilFinished, IInterval interval)
     {
         long intervalDuration = interval.getDuration();
-        long intervalElapsedTime = interval.getElapsed();
+        long intervalElapsedTime = interval.getElapsed()    ;
         float fullCircleAngle = 360f;
         if (intervalElapsedTime > 0) {
             float intervalElapsedTimePercent = (float) intervalElapsedTime / (float) intervalDuration * 100f;

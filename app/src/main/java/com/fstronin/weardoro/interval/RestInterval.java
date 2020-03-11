@@ -42,4 +42,9 @@ public class RestInterval extends Interval
             return new RestInterval[size];
         }
     };
+
+    public Type getType()
+    {
+        return Type.REST;
+    }
 }
