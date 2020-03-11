@@ -8,6 +8,8 @@ import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.fstronin.weardoro.interval.IInterval;
+
 
 public class TimerArc extends View
 {
@@ -57,12 +59,34 @@ public class TimerArc extends View
         invalidate();
     }
 
-    public void update(Context ctx, long millisInFuture, long millisUntilFinished)
+    private float getClockCirclePercent(long millisInFuture, long millisUntilFinished, long millisCountDownInterval)
     {
-        float clockCirclePercent = millisUntilFinished > App.getMillisCountDownInterval(ctx)
+        return millisUntilFinished > millisCountDownInterval
                 ? (float) millisUntilFinished / (float) millisInFuture * 100f
                 : 0;
-        float sweepAngle = 360f * clockCirclePercent / 100f;
+    }
+
+    private void update(Context ctx, long millisInFuture, long millisUntilFinished, float fullCircleAngle)
+    {
+        float clockCirclePercent = getClockCirclePercent(millisInFuture, millisUntilFinished, App.getMillisCountDownInterval(ctx));
+        float sweepAngle = fullCircleAngle * clockCirclePercent / 100f;
         setSweepAngle(sweepAngle);
+    }
+
+    public void update(Context ctx, long millisInFuture, long millisUntilFinished, IInterval interval)
+    {
+        long intervalDuration = interval.getDuration();
+        long intervalElapsedTime = interval.getElapsed();
+        float fullCircleAngle = 360f;
+        if (intervalElapsedTime > 0) {
+            float intervalElapsedTimePercent = (float) intervalElapsedTime / (float) intervalDuration * 100f;
+            fullCircleAngle = 360f - (360f * intervalElapsedTimePercent / 100f);
+        }
+        update(ctx, millisInFuture, millisUntilFinished, fullCircleAngle);
+    }
+
+    public void update(Context ctx, long millisInFuture, long millisUntilFinished)
+    {
+        update(ctx, millisInFuture, millisUntilFinished, 360f);
     }
 }

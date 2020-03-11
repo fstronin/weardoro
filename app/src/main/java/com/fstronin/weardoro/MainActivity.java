@@ -52,6 +52,7 @@ public class MainActivity extends WearableActivity
         super.onPause();
         // If user paused the activity then it doesn't need to handle any updates from AlarmReceiver
         unregisterReceiver(mBroadcastReceiver);
+        mInterval.save(this);
     }
 
     @Override
@@ -68,6 +69,8 @@ public class MainActivity extends WearableActivity
         // If nothing found then just create a default one
         if (null == mInterval) {
             mInterval = new FocusInterval(new AlarmPendingIntentBuilder());
+        } else if (mInterval.isFinished()) {
+            mInterval = mInterval.getNext();
         }
 
         onIntervalLoad(mInterval);
@@ -116,29 +119,34 @@ public class MainActivity extends WearableActivity
 
     private void onIntervalLoad(IInterval interval)
     {
-        mTopTextView.setText(App.getTimerClockFormat(this).format(new Date(interval.getMillisInFuture())));
-        mBottomTextView.setText(interval.getDisplayName(this));
         switch (interval.getState()) {
             case PAUSED:
                 mActionBtn.setText(R.string.text_resume);
+                mTopTextView.setText(App.getTimerClockFormat(this).format(new Date(interval.getMillisInFuture())));
+                mBottomTextView.setText(interval.getDisplayName(this));
+                mTimerArc.update(this, interval.getMillisInFuture(), interval.getMillisInFuture(), interval);
                 break;
             case RUNNING:
-                onIntervalStarted(interval);
+                try {
+                    onIntervalStarted(interval);
+                } catch (IntervalException e) {
+                    App.getLogger().d(this.getClass().getName(), e.getMessage(), e);
+                }
         }
     }
 
-    private void onIntervalStarted(IInterval interval)
+    private void onIntervalStarted(IInterval interval) throws IntervalException
     {
         if (null != mCountDownTimer) {
             mCountDownTimer.cancel();
         }
-        long timerMillisInFuture = interval.getMillisInFuture();
-        if (timerMillisInFuture > 0) {
-            mCountDownTimer = new CountDownTimer(timerMillisInFuture, App.getMillisCountDownInterval(this)) {
+        long millisInFuture = interval.getMillisInFuture();
+        if (millisInFuture > 0) {
+            mCountDownTimer = new CountDownTimer(millisInFuture, App.getMillisCountDownInterval(this)) {
                 @Override
                 public void onTick(long millisUntilFinished) {
                    //  App.getLogger().d(this.getClass().getName(), "Timer tick, millisUntilFinished=" + millisUntilFinished);
-                   // mTimerArc.update(MainActivity.this, timerMillisInFuture, millisUntilFinished);
+                    mTimerArc.update(MainActivity.this, millisInFuture, millisUntilFinished, interval);
                     mTopTextView.setText(App.getTimerClockFormat(MainActivity.this).format(new Date(millisUntilFinished)));
                 }
 
@@ -165,7 +173,7 @@ public class MainActivity extends WearableActivity
         if (null != mCountDownTimer) {
             mCountDownTimer.cancel();
         }
-        mActionBtn.setText(R.string.text_stop);
+        mActionBtn.setText(R.string.text_start);
         mTopTextView.setText(R.string.text_greetings);
         mBottomTextView.setText("");
         mTimerArc.update(this, 0, 0);
@@ -181,9 +189,14 @@ public class MainActivity extends WearableActivity
                     App.getLogger().e(this.getClass().getName(), "Unable to obtain interval instance from an intent");
                     return;
                 }
+                mInterval = interval;
                 switch (intent.getAction()) {
                     case IInterval.ALARM_INTENT_ACTION_INTERVAL_STARTED:
-                        MainActivity.this.onIntervalStarted(interval);
+                        try {
+                            MainActivity.this.onIntervalStarted(interval);
+                        } catch (IntervalException e) {
+                            App.getLogger().e(this.getClass().getName(), e.getMessage(), e);
+                        }
                         break;
                     case IInterval.ALARM_INTENT_ACTION_INTERVAL_PAUSED:
                         MainActivity.this.onIntervalPaused(interval);

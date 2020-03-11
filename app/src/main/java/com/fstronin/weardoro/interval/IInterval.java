@@ -36,4 +36,7 @@ public interface IInterval extends Parcelable
     IInterval getNext();
     long getMillisInFuture();
     String getDisplayName(Context ctx);
+    long getElapsed();
+    boolean isFinished();
+    void save(Context ctx);
 }

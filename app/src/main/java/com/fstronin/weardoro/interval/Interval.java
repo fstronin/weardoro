@@ -2,7 +2,6 @@ package com.fstronin.weardoro.interval;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Parcel;
 
 import com.fstronin.weardoro.App;
@@ -11,7 +10,9 @@ abstract public class Interval implements IInterval
 {
     private State mState = State.IDLE;
     private long mDuration;
+    private long mElapsed;
     private long mStartedAt;
+    private long mResumedAt;
     private long mPausedAt;
     private AlarmPendingIntentBuilder mAlarmPendingIntentBuilder;
     private int mFocusIntervalsBeenInChain;
@@ -32,8 +33,10 @@ abstract public class Interval implements IInterval
     protected Interval(Parcel in) {
         mState = State.valueOf(in.readString());
         mDuration = in.readLong();
+        mElapsed = in.readLong();
         mStartedAt = in.readLong();
         mPausedAt = in.readLong();
+        mResumedAt = in.readLong();
         mAlarmPendingIntentBuilder = in.readParcelable(AlarmPendingIntentBuilder.class.getClassLoader());
         mFocusIntervalsBeenInChain = in.readInt();
     }
@@ -58,7 +61,7 @@ abstract public class Interval implements IInterval
         return mPausedAt;
     }
 
-    private void save(Context ctx)
+    public void save(Context ctx)
     {
         App.getSharedPreferences(ctx)
                 .edit()
@@ -90,14 +93,13 @@ abstract public class Interval implements IInterval
                         mAlarmPendingIntentBuilder.build(ctx, this)
                 );
         mState = State.RUNNING;
-        save(ctx);
         notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_STARTED);
+        save(ctx);
     }
 
     public void start(Context ctx) throws IntervalException
     {
         start(ctx, System.currentTimeMillis());
-        mPausedAt = 0;
     }
 
     private void cancelAlarm(Context ctx)
@@ -113,10 +115,11 @@ abstract public class Interval implements IInterval
             throw new IntervalException("Can not pause from state \"%s\"", mState.name());
         }
         mPausedAt = System.currentTimeMillis();
+        mElapsed += mPausedAt - (mResumedAt > 0 ? mResumedAt : mStartedAt);
         cancelAlarm(ctx);
         mState = State.PAUSED;
-        save(ctx);
         notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_PAUSED);
+        save(ctx);
     }
 
     public void resume(Context ctx) throws IntervalException
@@ -125,6 +128,7 @@ abstract public class Interval implements IInterval
             throw new IntervalException("Can not resume from state \"%s\"", mState.name());
         }
         mState = State.IDLE;
+        mResumedAt = System.currentTimeMillis();
         start(ctx, mStartedAt);
     }
 
@@ -139,24 +143,34 @@ abstract public class Interval implements IInterval
         }
         cancelAlarm(ctx);
         mState = State.IDLE;
+        mElapsed = 0;
         mStartedAt = 0;
         mPausedAt = 0;
+        mResumedAt = 0;
         mFocusIntervalsBeenInChain = 0;
         save(ctx);
         notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_STOPPED);
     }
 
+    public long getElapsed()
+    {
+        return mElapsed + System.currentTimeMillis() - (mResumedAt > 0 ? mResumedAt : mStartedAt);
+    }
+
+    public boolean isFinished()
+    {
+        return getElapsed() >= mDuration;
+    }
+
     public long getMillisInFuture()
     {
-        return mPausedAt > 0L
-                ? Math.abs(mPausedAt - (mStartedAt + mDuration))
-                : Math.abs(System.currentTimeMillis() - (mStartedAt + mDuration));
+        return mDuration - getElapsed();
     }
 
     private long getAlarmTimeInMillis()
     {
-        return mPausedAt > 0L
-                ? System.currentTimeMillis() + (mDuration - (mPausedAt - mStartedAt))
+        return mElapsed > 0L
+                ? System.currentTimeMillis() + (mDuration - getElapsed())
                 : System.currentTimeMillis() + mDuration;
     }
 
@@ -183,8 +197,10 @@ abstract public class Interval implements IInterval
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeString(mState.name());
         dest.writeLong(mDuration);
+        dest.writeLong(mElapsed);
         dest.writeLong(mStartedAt);
         dest.writeLong(mPausedAt);
+        dest.writeLong(mResumedAt);
         dest.writeParcelable(mAlarmPendingIntentBuilder, 0);
         dest.writeInt(mFocusIntervalsBeenInChain);
     }
