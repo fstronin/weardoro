@@ -154,7 +154,9 @@ abstract public class Interval implements IInterval
 
     public long getElapsed()
     {
-        return mElapsed + System.currentTimeMillis() - (mResumedAt > 0 ? mResumedAt : mStartedAt);
+        return mState == State.RUNNING
+            ? (mElapsed + System.currentTimeMillis() - (mResumedAt > 0 ? mResumedAt : mStartedAt))
+            : mElapsed;
     }
 
     public boolean isFinished()

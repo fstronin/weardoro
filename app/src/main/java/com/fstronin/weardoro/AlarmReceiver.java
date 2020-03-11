@@ -4,14 +4,20 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 
 import com.fstronin.weardoro.interval.IInterval;
 import com.fstronin.weardoro.interval.IntervalException;
 
 public class AlarmReceiver extends BroadcastReceiver
 {
+    private final long[] VIBRATION_PATTERN = { 0, 200, 50, 200 };
+    private final int[] VIBRATION_AMPLITUDES = {0, 255, 10, 255};
+
     @Override
     public void onReceive(Context context, Intent intent) {
+        beep(context);
         String action = intent.getAction();
         if (null == action) {
             App.getLogger().e(this.getClass().getName(), "Empty action");
@@ -33,5 +39,18 @@ public class AlarmReceiver extends BroadcastReceiver
         } catch (IntervalException e) {
             App.getLogger().e(this.getClass().getName(), e.getMessage(), e);
         }
+    }
+
+    private void beep(Context ctx)
+    {
+        Vibrator vibrator = (Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
+        if (null != vibrator && vibrator.hasVibrator()) {
+            vibrator.vibrate(VibrationEffect.createWaveform(VIBRATION_PATTERN, VIBRATION_AMPLITUDES, -1));
+        }
+        Intent intent = (new Intent(ctx, MainActivity.class))
+                .setAction(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        ctx.startActivity(intent);
     }
 }
