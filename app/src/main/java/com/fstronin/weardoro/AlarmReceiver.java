@@ -3,12 +3,14 @@ package com.fstronin.weardoro;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 
 import com.fstronin.weardoro.interval.IInterval;
 import com.fstronin.weardoro.interval.IntervalException;
+import com.fstronin.weardoro.interval.Type;
 
 public class AlarmReceiver extends BroadcastReceiver
 {
@@ -32,6 +34,9 @@ public class AlarmReceiver extends BroadcastReceiver
         if (null == interval) {
             App.getLogger().e(this.getClass().getName(), "Unable to obtain interval instance from an intent");
             return;
+        }
+        if (interval.getType() == Type.FOCUS) {
+            App.getCounterStorage().incrementFocusIntervalCount(context);
         }
         IInterval nextInterval = interval.getNext();
         try {

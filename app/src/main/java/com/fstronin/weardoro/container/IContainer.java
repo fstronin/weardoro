@@ -10,6 +10,7 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.fstronin.weardoro.CounterStorage;
 import com.fstronin.weardoro.interval.IntervalBuilder;
 import com.fstronin.weardoro.logging.LoggerInterface;
 import com.google.gson.Gson;
@@ -32,4 +33,5 @@ public interface IContainer
     Gson getGson();
     SharedPreferences getSharedPreferences(Context ctx);
     IntervalBuilder getIntervalBuilder();
+    CounterStorage getCounterStorage();
 }

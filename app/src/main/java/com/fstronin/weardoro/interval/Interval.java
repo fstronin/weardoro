@@ -147,7 +147,6 @@ abstract public class Interval implements IInterval
         mStartedAt = 0;
         mPausedAt = 0;
         mResumedAt = 0;
-        mFocusIntervalsBeenInChain = 0;
         save(ctx);
         notifySubscribers(ctx, IInterval.ALARM_INTENT_ACTION_INTERVAL_STOPPED);
     }

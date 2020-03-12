@@ -24,9 +24,14 @@ public class FocusInterval extends Interval
     public IInterval getNext() {
         AlarmPendingIntentBuilder alarmPendingIntentBuilder = this.getAlarmPendingIntentBuilder();
         int focusIntervalsBeenInChain = this.getFocusIntervalsBeenInChain() + 1;
-            return focusIntervalsBeenInChain > 0 && (focusIntervalsBeenInChain % IInterval.DEFAULT_LONG_REST_INTERVAL_POSITION == 0)
-                ? new LongRestInterval(alarmPendingIntentBuilder, focusIntervalsBeenInChain)
-                : new RestInterval(alarmPendingIntentBuilder, focusIntervalsBeenInChain);
+        if (focusIntervalsBeenInChain == Integer.MAX_VALUE) {
+            focusIntervalsBeenInChain = Integer.MAX_VALUE % IInterval.DEFAULT_LONG_REST_INTERVAL_POSITION == 0
+                ? IInterval.DEFAULT_LONG_REST_INTERVAL_POSITION
+                : 1;
+        }
+        return focusIntervalsBeenInChain > 0 && (focusIntervalsBeenInChain % IInterval.DEFAULT_LONG_REST_INTERVAL_POSITION == 0)
+            ? new LongRestInterval(alarmPendingIntentBuilder, focusIntervalsBeenInChain)
+            : new RestInterval(alarmPendingIntentBuilder, focusIntervalsBeenInChain);
     }
 
     @Override

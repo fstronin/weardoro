@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.wearable.activity.WearableActivity;
@@ -18,9 +19,13 @@ import com.fstronin.weardoro.interval.IntervalException;
 import com.fstronin.weardoro.interval.Type;
 
 import java.util.Date;
+import java.util.Locale;
 
 public class MainActivity extends WearableActivity
 {
+    private SharedPreferences mSharedPreferences;
+    private int mFocusIntervalCount = 0;
+
     private TextView mTopTextView;
     private TextView mBottomTextView;
     private Button mActionBtn;
@@ -45,6 +50,8 @@ public class MainActivity extends WearableActivity
         mTimerArc = findViewById((R.id.timerArc));
 
         mBroadcastReceiver = buildBroadcastReceiver();
+
+        mSharedPreferences = App.getSharedPreferences(this);
     }
 
     @Override
@@ -62,12 +69,11 @@ public class MainActivity extends WearableActivity
         super.onResume();
 
         // Try to read latest started interval
-        /*
         mInterval = App.getIntervalBuilder().fromSharedPreferences(
-                App.getSharedPreferences(this),
+                mSharedPreferences,
                 IInterval.PREF_KEY_INTERVAL_CLASS,
                 IInterval.PREF_KEY_INTERVAL_DATA
-        );*/
+        );
         // If nothing found then just create a default one
         if (null == mInterval) {
             mInterval = new FocusInterval(new AlarmPendingIntentBuilder());
@@ -108,6 +114,9 @@ public class MainActivity extends WearableActivity
 
     private boolean onActionBtnLongClick(View v)
     {
+        if (mInterval.getType() != Type.FOCUS) {
+            return true;
+        }
         try {
             if (null != mCountDownTimer) {
                 mCountDownTimer.cancel();
@@ -135,6 +144,18 @@ public class MainActivity extends WearableActivity
                     App.getLogger().d(this.getClass().getName(), e.getMessage(), e);
                 }
         }
+    }
+
+    private String getIntervalDisplayName(IInterval interval)
+    {
+        return interval.getType() == Type.FOCUS
+                ? String.format(
+                        Locale.getDefault(),
+                        "%s %d",
+                        interval.getDisplayName(this),
+                        App.getCounterStorage().getFocusIntervalCount(this)
+                )
+                : interval.getDisplayName(this);
     }
 
     private void onIntervalStarted(IInterval interval) throws IntervalException
@@ -170,7 +191,7 @@ public class MainActivity extends WearableActivity
                 break;
         }
         mActionBtn.setText(actionBtnTextId);
-        mBottomTextView.setText(interval.getDisplayName(this));
+        mBottomTextView.setText(getIntervalDisplayName(interval));
     }
 
     private void onIntervalPaused(IInterval interval)

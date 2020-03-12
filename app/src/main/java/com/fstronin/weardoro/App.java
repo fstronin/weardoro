@@ -103,4 +103,9 @@ public class App
     {
         return mContainer.getIntervalBuilder();
     }
+
+    public static CounterStorage getCounterStorage()
+    {
+        return mContainer.getCounterStorage();
+    }
 }

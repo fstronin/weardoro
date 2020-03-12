@@ -6,13 +6,13 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import com.fstronin.weardoro.CounterStorage;
 import com.fstronin.weardoro.R;
 import com.fstronin.weardoro.interval.Interval;
 import com.fstronin.weardoro.interval.IntervalBuilder;
 import com.fstronin.weardoro.logging.Logger;
 import com.fstronin.weardoro.logging.LoggerInterface;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -32,6 +32,7 @@ public class Base implements IContainer
     private AlarmManager mAlarmManager;
     private Gson mGson;
     private SharedPreferences mSharedPreferences;
+    private CounterStorage mCounterStorage;
 
     @Override
     public NotificationManager getNotificationManager(Context ctx)
@@ -169,5 +170,13 @@ public class Base implements IContainer
     public IntervalBuilder getIntervalBuilder()
     {
         return new IntervalBuilder();
+    }
+
+    public CounterStorage getCounterStorage()
+    {
+        if (null == mCounterStorage) {
+            mCounterStorage = new CounterStorage();
+        }
+        return mCounterStorage;
     }
 }
