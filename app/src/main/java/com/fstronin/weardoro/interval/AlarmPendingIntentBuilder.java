@@ -12,7 +12,7 @@ import com.fstronin.weardoro.AlarmReceiver;
 public class AlarmPendingIntentBuilder implements Parcelable
 {
     private final int REQUEST_CODE = 1;
-    private final int FLAGS = PendingIntent.FLAG_UPDATE_CURRENT;
+    private final int FLAGS = PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE;
 
     public AlarmPendingIntentBuilder()  {}
     public AlarmPendingIntentBuilder(Parcel in)  {}

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.fstronin.weardoro" >
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -25,6 +25,7 @@
             android:value="true" />
 
         <activity
+            android:exported="true"
             android:name=".MainActivity"
             android:label="@string/app_name" >
             <intent-filter>
@@ -34,7 +35,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".AlarmReceiver">
+        <receiver android:exported="true" android:name=".AlarmReceiver">
             <intent-filter>
                 <action android:name="com.fstronin.weardoro.INTERVAL_FINISHED" />
             </intent-filter>
